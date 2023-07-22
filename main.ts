@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as csv from "csv-parser";
 import { LocalStorage } from "node-localstorage";
 import { main } from "./test-algorithm/main";
+import { TradeInfo } from "./test-algorithm/types";
 // main should fetch price or candles from fetcher
 
 const localstorage = new LocalStorage("./test-algorithm/localstorage");
@@ -22,6 +23,141 @@ const pullTestData = () => {
 		// Pull Test data based on specific time range
 	}
 };
+
+const initiateResultsFiles = () => {
+	fs.writeFileSync("results/entries.json", JSON.stringify([]));
+	fs.writeFileSync("results/exits.json", JSON.stringify([]));
+	fs.writeFileSync("results/trades.json", JSON.stringify([]));
+};
+
+const calculateTotalProfit = (trades: TradeInfo[]) => {
+	// const trades = JSON.parse(fs.readFileSync("results/trades.json", "utf-8"));
+	let profit = 0;
+	let profitPercent = 0;
+	trades.forEach((trade: TradeInfo) => {
+		profit += trade["profitAbsolute"];
+		profitPercent += trade["profitPercent"];
+	});
+	return { profit, profitPercent };
+};
+
+const calculateTotalProfitPercent = () => {
+	const trades = JSON.parse(fs.readFileSync("results/trades.json", "utf-8"));
+	let profit = 0;
+	trades.forEach((trade: TradeInfo) => {
+		profit += trade["profitPercent"];
+	});
+	return profit;
+};
+
+const calculateMaxConsecutiveLossingTrades = (trades: TradeInfo[]) => {
+	// const trades = JSON.parse(fs.readFileSync("results/trades.json", "utf-8"));
+	let maxConsecutiveLossingTrades = 0;
+	let currentConsecutiveLossingTrades = 0;
+	trades.forEach((trade: TradeInfo) => {
+		if (trade["profitPercent"] < 0) {
+			currentConsecutiveLossingTrades++;
+		} else {
+			if (currentConsecutiveLossingTrades > maxConsecutiveLossingTrades) {
+				maxConsecutiveLossingTrades = currentConsecutiveLossingTrades;
+			}
+			currentConsecutiveLossingTrades = 0;
+		}
+	});
+	return maxConsecutiveLossingTrades;
+};
+
+const calculateMaxLoss = (trades: TradeInfo[]) => {
+	let maxLoss = 0;
+	let currentLoss = 0;
+	trades.forEach((trade: TradeInfo) => {
+		if (trade["profitAbsolute"] < 0) {
+			currentLoss += trade["profitAbsolute"];
+		} else {
+			if (currentLoss < maxLoss) {
+				maxLoss = currentLoss;
+			}
+			currentLoss = 0;
+		}
+	});
+	return maxLoss;
+};
+
+const calculateMaxAbsoluteLoss = (trades: TradeInfo[]) => {
+	// From the saved trade data, calculate the lowest point the account reached
+	let maxAbsoluteLoss = 0;
+	let currentAbsoluteLoss = 0;
+	trades.forEach((trade: TradeInfo) => {
+		currentAbsoluteLoss += trade["profitAbsolute"];
+		if (currentAbsoluteLoss < maxAbsoluteLoss) {
+			maxAbsoluteLoss = currentAbsoluteLoss;
+		}
+	});
+	return maxAbsoluteLoss;
+};
+
+const calculatePercentOfProfitableTrades = (trades: TradeInfo[]) => {
+	let profitableTrades = 0;
+	trades.forEach((trade: TradeInfo) => {
+		if (trade["profitPercent"] > 0) {
+			profitableTrades++;
+		}
+	});
+	return (profitableTrades / trades.length).toFixed(5);
+};
+
+const calculateAvgProfitPercentOfWinningTrades = (trades: TradeInfo[]) => {};
+// 	let totalProfitPercent = 0;
+// 	let profitableTrades = 0;
+// 	trades.forEach((trade: TradeInfo) => {
+// 		if (trade["profitPercent"] > 0) {
+// }
+
+const createFinalResultsFile = (
+	startTimestamp: string,
+	endTimestamp: string
+) => {
+	const startingMinute = new Date(parseFloat(startTimestamp) * 1000);
+	const endingMinute = new Date(parseFloat(endTimestamp) * 1000);
+	const trades = JSON.parse(fs.readFileSync("results/trades.json", "utf-8"));
+
+	// Profit
+	const { profit, profitPercent } = calculateTotalProfit(trades);
+
+	// Profit Percentage
+	// const profitPercent: string = calculateTotalProfitPercent();
+
+	// Max Consecutive Lossing Trades
+	const maxConsecutiveLossingTrades: number =
+		calculateMaxConsecutiveLossingTrades(trades);
+
+	// Max Loss
+	const maxLoss: number = calculateMaxLoss(trades);
+
+	// Max Loss below initial investment
+	const maxAbsoluteLoss: number = calculateMaxAbsoluteLoss(trades);
+
+	// Number of Trades
+	const totalTrades: number = trades.length;
+
+	// % of Profitable Trades
+	const percentOfProfitableTrades: string =
+		calculatePercentOfProfitableTrades(trades);
+
+	// (Avg Profit % of winning trades)
+	const avgProfitPercentOfWinningTrades =
+		calculateAvgProfitPercentOfWinningTrades(trades);
+
+	// (Avg Loss % of lossing trades)
+
+	// (Avg profit per week)
+	// (Avg profit per month)
+
+	// (Lowest % drop of winning trade)
+	// Max Loss before a winning trade?
+};
+
+initiateResultsFiles();
 
 // TODO: Modify test algorithm main to pull candles/price from fetcher
 if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
@@ -55,6 +191,7 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 		// 		After storing in localstorage(exit), tally exit/entry gain/loss and write to file/memory
 
 		// Create results JSON
+		createFinalResultsFile(testData[0], testData[testData.length - 1]);
 	})();
 } else {
 	(async () => {

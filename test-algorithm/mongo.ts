@@ -1,21 +1,10 @@
 require("dotenv").config();
 import { readFileSync, writeFileSync } from "fs";
-
 import { LocalStorage } from "node-localstorage";
 
-const localstorage = new LocalStorage("./localstorage");
+import { TradeInfo } from "./types";
 
-export interface TradeInfo {
-	exitDatetime: Date;
-	entryDatetime: Date;
-	mode: string;
-	entryPrice: number | string;
-	entryAmountUSD: number | string;
-	exitPrice: number;
-	algo: string;
-	profitAbsolute: number | string;
-	profitPercent: number | string;
-}
+const localstorage = new LocalStorage("./localstorage");
 
 const getDatetime3daysAgo = (date: Date) => {
 	date.setDate(date.getDate() - 3);
