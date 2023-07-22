@@ -8,6 +8,8 @@ import { TradeInfo } from "./test-algorithm/types";
 
 const localstorage = new LocalStorage("./test-algorithm/localstorage");
 
+const algo = process.env.ALGO;
+
 const pullTestData = () => {
 	if (process.env.TEST_DATA_LOCATION === "DISC") {
 		const testData = JSON.parse(
@@ -106,13 +108,6 @@ const calculatePercentOfProfitableTrades = (trades: TradeInfo[]) => {
 	return (profitableTrades / trades.length).toFixed(5);
 };
 
-const calculateAvgProfitPercentOfWinningTrades = (trades: TradeInfo[]) => {};
-// 	let totalProfitPercent = 0;
-// 	let profitableTrades = 0;
-// 	trades.forEach((trade: TradeInfo) => {
-// 		if (trade["profitPercent"] > 0) {
-// }
-
 const createFinalResultsFile = (
 	startTimestamp: string,
 	endTimestamp: string
@@ -132,7 +127,7 @@ const createFinalResultsFile = (
 		calculateMaxConsecutiveLossingTrades(trades);
 
 	// Max Loss
-	const maxLoss: number = calculateMaxLoss(trades);
+	// const maxLoss: number = calculateMaxLoss(trades);
 
 	// Max Loss below initial investment
 	const maxAbsoluteLoss: number = calculateMaxAbsoluteLoss(trades);
@@ -145,16 +140,26 @@ const createFinalResultsFile = (
 		calculatePercentOfProfitableTrades(trades);
 
 	// (Avg Profit % of winning trades)
-	const avgProfitPercentOfWinningTrades =
-		calculateAvgProfitPercentOfWinningTrades(trades);
-
 	// (Avg Loss % of lossing trades)
 
 	// (Avg profit per week)
 	// (Avg profit per month)
 
 	// (Lowest % drop of winning trade)
-	// Max Loss before a winning trade?
+
+	fs.writeFileSync(
+		`results/${startingMinute}-${endingMinute}-${algo}.json`,
+		JSON.stringify({
+			"Start Time": startingMinute,
+			"End Time": endingMinute,
+			"Total Profit": profit,
+			"Total Profit Percent": profitPercent,
+			"Max Consecutive Lossing Trades": maxConsecutiveLossingTrades,
+			// "Max USD Loss": maxLoss,
+			"Max drop from initial investment ($)": maxAbsoluteLoss,
+			"Percent of Profitable Trades": percentOfProfitableTrades,
+		})
+	);
 };
 
 initiateResultsFiles();
