@@ -1,0 +1,30 @@
+{
+  "name": "proving-grounds",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/francoisrice/proving-grounds.git"
+  },
+  "author": "François Rice",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/francoisrice/proving-grounds/issues"
+  },
+  "homepage": "https://github.com/francoisrice/proving-grounds#readme",
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "fs": "^0.0.1-security",
+    "node-localstorage": "^2.2.1",
+    "typescript": "^5.1.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.2",
+    "@types/node-localstorage": "^1.3.0"
+  }
+}
