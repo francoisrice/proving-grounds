@@ -1,4 +1,5 @@
 require("dotenv").config();
+import { readFileSync, writeFileSync } from "fs";
 
 import { LocalStorage } from "node-localstorage";
 
@@ -104,16 +105,25 @@ export const newSellInterrupt = async (algo: string): Promise<boolean> => {
 };
 
 export const sendEntryInfoToDB = async (algo: string, entryPrice: number) => {
-	// datetime?
-	localstorage.setItem("entry", entryPrice.toString());
+	const timestamp = localstorage.getItem("timestamp");
+	writeFileSync(
+		"../results/entries.json",
+		JSON.stringify({ timestamp, algo, entryPrice })
+	);
 };
 
 export const sendExitInfoToDB = async (algo: string, exitPrice: number) => {
-	// datetime?
-	localstorage.setItem("exit", exitPrice.toString());
+	const timestamp = localstorage.getItem("timestamp");
+	writeFileSync(
+		"../results/exits.json",
+		JSON.stringify({ timestamp, algo, exitPrice })
+	);
 };
 
 export const sendTradeInfoToDB = async (tradeInfo: TradeInfo) => {
-	// datetime?
-	localstorage.setItem("trade", JSON.stringify(tradeInfo));
+	const timestamp = localstorage.getItem("timestamp");
+	writeFileSync(
+		"../results/exits.json",
+		JSON.stringify({ timestamp, tradeInfo })
+	);
 };
