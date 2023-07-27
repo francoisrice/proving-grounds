@@ -10,8 +10,6 @@ import {
 import { fetchDate, fetchCandles } from "./fetcher";
 import { TradeInfo } from "./types";
 
-const localstorage = new LocalStorage("./localstorage");
-
 const api_key: string = process.env.COINBASE_API_KEY || "";
 const api_secret: string = process.env.COINBASE_API_SECRET || "";
 
@@ -21,6 +19,8 @@ const isLiveTrading: boolean =
 
 // const algo: string = process.env.ALGO || "bb-reversal-1min-btc-v0_1";
 const algo: string = "bb-reversal-1min-v0_1_1";
+
+const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
 /*
 * Change profitTarget
@@ -286,7 +286,7 @@ export const main = async () => {
 				}
 			}
 
-			const entryTime = localstorage.getItem(`entryDateTime-BTC`);
+			const entryTime = localstorage.getItem(`entryDatetime-BTC`);
 			count = 0;
 			while (!entryTime) {
 				const entryTime = localstorage.getItem(`entryDateTime-BTC`);
@@ -394,7 +394,8 @@ const sendMockSellOrder = async (base_size: number) => {
 	};
 };
 
-console.log(`Starting ${algo} ...`);
-setInterval(async () => {
-	await main();
-}, 60000);
+// When running in production
+// console.log(`Starting ${algo} ...`);
+// setInterval(async () => {
+// 	await main();
+// }, 60000);

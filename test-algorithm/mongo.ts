@@ -4,7 +4,9 @@ import { LocalStorage } from "node-localstorage";
 
 import { TradeInfo } from "./types";
 
-const localstorage = new LocalStorage("./localstorage");
+const algo = process.env.ALGO;
+
+const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
 const getDatetime3daysAgo = (date: Date) => {
 	date.setDate(date.getDate() - 3);
@@ -100,7 +102,7 @@ export const newSellInterrupt = async (algo: string): Promise<boolean> => {
 export const sendEntryInfoToDB = async (algo: string, entryPrice: number) => {
 	const timestamp = localstorage.getItem("timestamp");
 	writeFileSync(
-		`../results/${algo}-entries.json`,
+		`results/${algo}-entries.json`,
 		JSON.stringify({ timestamp, algo, entryPrice }),
 		{ flag: "a" }
 	);
@@ -110,7 +112,7 @@ export const sendEntryInfoToDB = async (algo: string, entryPrice: number) => {
 export const sendExitInfoToDB = async (algo: string, exitPrice: number) => {
 	const timestamp = localstorage.getItem("timestamp");
 	writeFileSync(
-		`../results/${algo}-exits.json`,
+		`results/${algo}-exits.json`,
 		JSON.stringify({ timestamp, algo, exitPrice }),
 		{ flag: "a" }
 	);
@@ -120,7 +122,7 @@ export const sendExitInfoToDB = async (algo: string, exitPrice: number) => {
 export const sendTradeInfoToDB = async (algo: string, tradeInfo: TradeInfo) => {
 	const timestamp = localstorage.getItem("timestamp");
 	writeFileSync(
-		`../results/${algo}-trades.json`,
+		`results/${algo}-trades.json`,
 		JSON.stringify({ timestamp, tradeInfo }),
 		{ flag: "a" }
 	);

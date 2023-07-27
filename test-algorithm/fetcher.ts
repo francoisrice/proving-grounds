@@ -2,7 +2,9 @@ require("dotenv").config();
 
 import { LocalStorage } from "node-localstorage";
 
-const localstorage = new LocalStorage("./localstorage");
+const algo = process.env.ALGO;
+
+const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
 export const fetchDate = () => {
 	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
@@ -13,31 +15,37 @@ export const fetchDate = () => {
 			count++;
 			if (count > 5) {
 				console.log(
-					"Stuck fetching current Timestamp in aggregateTrades() - mongo.ts"
+					"Stuck fetching current Timestamp in fetchDate() - fetcher.ts"
 				);
 			}
 		}
 
-		return new Date(timestamp);
+		return new Date(parseInt(timestamp) * 1000);
 	} else {
 		return new Date();
 	}
 };
 
-export const fetchCandles = async (candleNum: number) => {
+export const fetchCandles = async (candleNum: number): Promise<any> => {
 	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
-		var candles = localstorage.getItem("candles");
+		var candlesJSONObj: any = localstorage.getItem("candles");
 		var count = 0;
-		while (!candles) {
-			candles = localstorage.getItem("candles");
+		while (!candlesJSONObj) {
+			candlesJSONObj = localstorage.getItem("candles");
 			count++;
 			if (count > 5) {
 				console.log(
-					"Stuck fetching current Timestamp in aggregateTrades() - mongo.ts"
+					"Stuck fetching current candles in fetchCandles() - fetcher.ts"
 				);
 			}
 		}
-		return JSON.parse(candles).slice(candles.length - candleNum, candleNum);
+
+		const candlesArray = JSON.parse(candlesJSONObj);
+		const candles = candlesArray.slice(
+			candlesArray.length - candleNum,
+			candleNum
+		);
+		return Promise.resolve(candles);
 	}
 };
 
@@ -50,7 +58,7 @@ export const fetchPrice = async () => {
 			count++;
 			if (count > 5) {
 				console.log(
-					"Stuck fetching current Timestamp in aggregateTrades() - mongo.ts"
+					"Stuck fetching current candle in fetchPrice() - fetcher.ts"
 				);
 			}
 		}

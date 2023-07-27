@@ -8,8 +8,6 @@ import { main } from "./test-algorithm/bb-reversal-1min-main";
 import { TradeInfo } from "./test-algorithm/types";
 // main should fetch price or candles from fetcher
 
-const localstorage = new LocalStorage("./test-algorithm/localstorage");
-
 /*
 bollinger band breakout
 bollinger band reversal
@@ -22,7 +20,7 @@ Crab:
 bb-reversal-1min
 
 Bear:
-	Capitalize on small bullish pumps within the bearish trend
+Capitalize on small bullish pumps within the bearish trend
 MA crossover
 Fibonacci Retracement
 */
@@ -31,22 +29,7 @@ const algo = process.env.ALGO;
 // const algo = "bb-reversal-1min-btc-v0_1";
 // const algo = "bb-reversal-v0_1";
 
-const pullTestData = () => {
-	if (process.env.TEST_DATA_LOCATION === "DISC") {
-		const testData = JSON.parse(
-			fs.readFileSync(
-				// "data/bear/1-min_data_2012-01-01_to_2021-03-31_timestamp_weighted_price.json",
-				"data/crab/1-min_data_2015-01-13_to_2015-10-26_timestamp_weighted_price.json",
-				"utf-8"
-			)
-		);
-		return JSON.parse(testData);
-	} else if (process.env.TEST_DATA_LOCATION === "DB") {
-		// Pull Test data based on specific time range
-	} else {
-		// Pull Test data based on specific time range
-	}
-};
+const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
 const initiateResultsFiles = () => {
 	fs.writeFileSync(`results/${algo}-entries.json`, JSON.stringify([]));
@@ -136,8 +119,8 @@ const createFinalResultsFile = (
 	startTimestamp: string,
 	endTimestamp: string
 ) => {
-	const startingMinute = new Date(parseFloat(startTimestamp) * 1000);
-	const endingMinute = new Date(parseFloat(endTimestamp) * 1000);
+	const startingMinute = new Date(parseInt(startTimestamp) * 1000);
+	const endingMinute = new Date(parseInt(endTimestamp) * 1000);
 	const trades = JSON.parse(
 		fs.readFileSync(`results/${algo}-trades.json`, "utf-8")
 	);
@@ -190,6 +173,23 @@ const createFinalResultsFile = (
 
 initiateResultsFiles();
 
+const pullTestData = () => {
+	if (process.env.TEST_DATA_LOCATION === "DISC") {
+		const testData = JSON.parse(
+			fs.readFileSync(
+				// "data/bear/1-min_data_2012-01-01_to_2021-03-31_timestamp_weighted_price.json",
+				"data/crab/1-min_data_2015-01-13_to_2015-10-26_timestamp_weighted_price.json",
+				"utf-8"
+			)
+		);
+		return testData.slice(0, 100);
+	} else if (process.env.TEST_DATA_LOCATION === "DB") {
+		// Pull Test data based on specific time range
+	} else {
+		// Pull Test data based on specific time range
+	}
+};
+
 // TODO: Modify test algorithm main to pull candles/price from fetcher
 if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 	const candleNumberString = process.env.CANDLE_NUMBER;
@@ -201,14 +201,13 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 	(async () => {
 		const testData: any[] = pullTestData();
 
-		for (let i = candleNum - 1; i < testData.length; i++) {
+		for (let i = 0; i < testData.length - candleNum; i++) {
 			// Set timestamp and candles for test algorithm
 			localstorage.setItem("timestamp", testData[i]["Timestamp"]);
 			localstorage.setItem(
 				"candles",
-				testData
-					.slice(i + 1 - candleNum, candleNum)
-					.map((candle) => {
+				JSON.stringify(
+					testData.slice(i, i + candleNum).map((candle) => {
 						return {
 							close: candle["Weighted_Price"],
 							high: candle["Weighted_Price"],
@@ -216,10 +215,10 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 							open: candle["Weighted_Price"],
 						};
 					})
-					.toString()
+				)
 			);
 
-			main();
+			await main();
 		}
 
 		// Results collection and Test Reporting
@@ -229,7 +228,10 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 		// 		After storing in localstorage(exit), tally exit/entry gain/loss and write to file/memory
 
 		// Create results JSON
-		createFinalResultsFile(testData[0], testData[testData.length - 1]);
+		createFinalResultsFile(
+			testData[0]["Timestamp"],
+			testData[testData.length - 1]["Timestamp"]
+		);
 	})();
 } else {
 	(async () => {
