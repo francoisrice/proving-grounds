@@ -14,6 +14,7 @@ const getDatetime3daysAgo = (date: Date) => {
 export const aggregateTrades = async (algo: string) => {
 	var timestamp: any = null;
 	var count: number = 0;
+
 	while (!timestamp) {
 		timestamp = localstorage.getItem("timestamp");
 		count++;
@@ -23,21 +24,24 @@ export const aggregateTrades = async (algo: string) => {
 			);
 		}
 	}
-	const threeDaysAgo = parseInt(timestamp) - 72 * 60 * 60;
-	// currentDate = parseInt(timestamp);
 
-	// pull trades
+	const threeDaysAgo = parseInt(timestamp) - 72 * 60 * 60;
+	const currentDate = parseInt(timestamp);
+
+	const trades: TradeInfo[] = JSON.parse(
+		readFileSync(`../results/${algo}-trades.json`, "utf-8")
+	);
 
 	var subTrades: TradeInfo[] = [];
 
-	/* 	trades.map((trade: TradeInfo) => {
+	trades.forEach((trade) => {
 		if (
 			trade.entryDatetime.getTime() / 1000 > threeDaysAgo &&
-			trade.exitDatetime.getTime() / 1000 < parseInt(timestamp)
+			trade.exitDatetime.getTime() / 1000 < currentDate
 		) {
-			subTrades.append(trade);
+			subTrades.push(trade);
 		}
-	}); */
+	});
 
 	// Get trades from the last 3 days
 	// 	Must store trades ... in a time-series list ...
@@ -46,7 +50,7 @@ export const aggregateTrades = async (algo: string) => {
 	// List of objects; timestamp field; all values more than X
 	// 		and less than Y go into the subset; no-dedup required
 
-	// return trades;
+	return subTrades;
 };
 
 export const fetchCurrentAlgo = async () => {
@@ -79,7 +83,7 @@ export const sendSellInterrupt = async (algo: string) => {
 };
 
 export const fetchAlgoParams = async (algo: string) => {
-	const accountSize: number = parseInt(process.env.ACCOUNT_SIZE || "10000");
+	const accountSize: any = process.env.ACCOUNT_SIZE || "10000";
 	return { buyVar: accountSize, sellVar: accountSize };
 };
 
@@ -96,23 +100,29 @@ export const newSellInterrupt = async (algo: string): Promise<boolean> => {
 export const sendEntryInfoToDB = async (algo: string, entryPrice: number) => {
 	const timestamp = localstorage.getItem("timestamp");
 	writeFileSync(
-		"../results/entries.json",
-		JSON.stringify({ timestamp, algo, entryPrice })
+		`../results/${algo}-entries.json`,
+		JSON.stringify({ timestamp, algo, entryPrice }),
+		{ flag: "a" }
 	);
+	return { acknowledged: true };
 };
 
 export const sendExitInfoToDB = async (algo: string, exitPrice: number) => {
 	const timestamp = localstorage.getItem("timestamp");
 	writeFileSync(
-		"../results/exits.json",
-		JSON.stringify({ timestamp, algo, exitPrice })
+		`../results/${algo}-exits.json`,
+		JSON.stringify({ timestamp, algo, exitPrice }),
+		{ flag: "a" }
 	);
+	return { acknowledged: true };
 };
 
-export const sendTradeInfoToDB = async (tradeInfo: TradeInfo) => {
+export const sendTradeInfoToDB = async (algo: string, tradeInfo: TradeInfo) => {
 	const timestamp = localstorage.getItem("timestamp");
 	writeFileSync(
-		"../results/exits.json",
-		JSON.stringify({ timestamp, tradeInfo })
+		`../results/${algo}-trades.json`,
+		JSON.stringify({ timestamp, tradeInfo }),
+		{ flag: "a" }
 	);
+	return { acknowledged: true };
 };
