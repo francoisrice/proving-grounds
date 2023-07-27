@@ -2,19 +2,41 @@ require("dotenv").config();
 import * as fs from "fs";
 import * as csv from "csv-parser";
 import { LocalStorage } from "node-localstorage";
-import { main } from "./test-algorithm/main";
+// import { main } from "./test-algorithm/main";
+import { main } from "./test-algorithm/bb-reversal-1min-main";
+// import { main } from "./test-algorithm/new-monthly-high-main";
 import { TradeInfo } from "./test-algorithm/types";
 // main should fetch price or candles from fetcher
 
 const localstorage = new LocalStorage("./test-algorithm/localstorage");
 
+/*
+bollinger band breakout
+bollinger band reversal
+Turtle?
+
+Bull:
+MA crossover + 
+
+Crab:
+bb-reversal-1min
+
+Bear:
+	Capitalize on small bullish pumps within the bearish trend
+MA crossover
+Fibonacci Retracement
+*/
+
 const algo = process.env.ALGO;
+// const algo = "bb-reversal-1min-btc-v0_1";
+// const algo = "bb-reversal-v0_1";
 
 const pullTestData = () => {
 	if (process.env.TEST_DATA_LOCATION === "DISC") {
 		const testData = JSON.parse(
 			fs.readFileSync(
-				"data/1-min_data_2012-01-01_to_2021-03-31_timestamp_weighted_price.json",
+				// "data/bear/1-min_data_2012-01-01_to_2021-03-31_timestamp_weighted_price.json",
+				"data/crab/1-min_data_2015-01-13_to_2015-10-26_timestamp_weighted_price.json",
 				"utf-8"
 			)
 		);
@@ -27,9 +49,9 @@ const pullTestData = () => {
 };
 
 const initiateResultsFiles = () => {
-	fs.writeFileSync("results/entries.json", JSON.stringify([]));
-	fs.writeFileSync("results/exits.json", JSON.stringify([]));
-	fs.writeFileSync("results/trades.json", JSON.stringify([]));
+	fs.writeFileSync(`results/${algo}-entries.json`, JSON.stringify([]));
+	fs.writeFileSync(`results/${algo}-exits.json`, JSON.stringify([]));
+	fs.writeFileSync(`results/${algo}-trades.json`, JSON.stringify([]));
 };
 
 const calculateTotalProfit = (trades: TradeInfo[]) => {
@@ -44,7 +66,9 @@ const calculateTotalProfit = (trades: TradeInfo[]) => {
 };
 
 const calculateTotalProfitPercent = () => {
-	const trades = JSON.parse(fs.readFileSync("results/trades.json", "utf-8"));
+	const trades = JSON.parse(
+		fs.readFileSync(`results/${algo}-trades.json`, "utf-8")
+	);
 	let profit = 0;
 	trades.forEach((trade: TradeInfo) => {
 		profit += trade["profitPercent"];
@@ -114,7 +138,9 @@ const createFinalResultsFile = (
 ) => {
 	const startingMinute = new Date(parseFloat(startTimestamp) * 1000);
 	const endingMinute = new Date(parseFloat(endTimestamp) * 1000);
-	const trades = JSON.parse(fs.readFileSync("results/trades.json", "utf-8"));
+	const trades = JSON.parse(
+		fs.readFileSync(`results/${algo}-trades.json`, "utf-8")
+	);
 
 	// Profit
 	const { profit, profitPercent } = calculateTotalProfit(trades);
@@ -148,12 +174,12 @@ const createFinalResultsFile = (
 	// (Lowest % drop of winning trade)
 
 	fs.writeFileSync(
-		`results/${startingMinute}-${endingMinute}-${algo}.json`,
+		`results/${startingMinute}-${endingMinute}-${algo}-output.json`,
 		JSON.stringify({
 			"Start Time": startingMinute,
 			"End Time": endingMinute,
-			"Total Profit": profit,
-			"Total Profit Percent": profitPercent,
+			"Total Profit ($)": profit,
+			"Total Profit (%)": profitPercent,
 			"Max Consecutive Lossing Trades": maxConsecutiveLossingTrades,
 			// "Max USD Loss": maxLoss,
 			"Max drop from initial investment ($)": maxAbsoluteLoss,
@@ -182,7 +208,14 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 				"candles",
 				testData
 					.slice(i + 1 - candleNum, candleNum)
-					.map((candle) => candle["Weighted_Price"])
+					.map((candle) => {
+						return {
+							close: candle["Weighted_Price"],
+							high: candle["Weighted_Price"],
+							low: candle["Weighted_Price"],
+							open: candle["Weighted_Price"],
+						};
+					})
 					.toString()
 			);
 
