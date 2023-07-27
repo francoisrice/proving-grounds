@@ -17,11 +17,6 @@ const isLiveTrading: boolean =
 	(process.env.LIVE_TRADING || "false").toUpperCase().includes("T") ||
 	(process.env.LIVE_TRADING || "false").toUpperCase().includes("Y");
 
-// const algo: string = process.env.ALGO || "bb-reversal-1min-btc-v0_1";
-const algo: string = "bb-reversal-1min-v0_1_1";
-
-const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
-
 /*
 * Change profitTarget
 * Change trailingStop
@@ -48,6 +43,12 @@ Crab:
 12. - Lower band at 1.0 std devs (84% chance to increase), trailing stop at 0.002 
 13. - Lower band at 1.0 std devs (84% chance to increase), trailing stop at 0.005 
 */
+
+// const algo: string = process.env.ALGO || "bb-reversal-1min-btc-v0_1";
+const algo: string = process.env.ALGO || "bb-reversal-v0_1_1a";
+// const algo: string = "bb-reversal-1min-v0_1_1";
+
+const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
 const profitTarget = null; // 0.002;
 // const stopLoss = 0.005; // Made redundant by trailingStop

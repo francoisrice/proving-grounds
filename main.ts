@@ -157,7 +157,7 @@ const createFinalResultsFile = (
 	// (Lowest % drop of winning trade)
 
 	fs.writeFileSync(
-		`results/${startingMinute}-${endingMinute}-${algo}-output.json`,
+		`results/${startingMinute.toDateString()}-${endingMinute.toDateString()}-${algo}-output.json`,
 		JSON.stringify({
 			"Start Time": startingMinute,
 			"End Time": endingMinute,
