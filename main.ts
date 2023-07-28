@@ -1,6 +1,8 @@
 require("dotenv").config();
 import * as fs from "fs";
 import * as csv from "csv-parser";
+import ProgressBar from "progress";
+
 import { LocalStorage } from "node-localstorage";
 // import { main } from "./test-algorithm/main";
 import { main } from "./test-algorithm/bb-reversal-1min-main";
@@ -24,6 +26,10 @@ Capitalize on small bullish pumps within the bearish trend
 MA crossover
 Fibonacci Retracement
 */
+
+var progressBar = new ProgressBar("[:bar] :percent :etas", {
+	total: 100,
+});
 
 const algo = process.env.ALGO;
 // const algo = "bb-reversal-1min-btc-v0_1";
@@ -182,7 +188,7 @@ const pullTestData = () => {
 				"utf-8"
 			)
 		);
-		return testData.slice(0, 100);
+		return testData;
 	} else if (process.env.TEST_DATA_LOCATION === "DB") {
 		// Pull Test data based on specific time range
 	} else {
@@ -201,7 +207,13 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 	(async () => {
 		const testData: any[] = pullTestData();
 
+		var progressBar = new ProgressBar("[:bar] :percent :etas", {
+			total: testData.length - candleNum,
+		});
+
 		for (let i = 0; i < testData.length - candleNum; i++) {
+			progressBar.tick();
+
 			// Set timestamp and candles for test algorithm
 			localstorage.setItem("timestamp", testData[i]["Timestamp"]);
 			localstorage.setItem(
@@ -237,12 +249,18 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 	(async () => {
 		const testData: any[] = pullTestData();
 
-		testData.forEach((data) => {
+		var progressBar = new ProgressBar("[:bar] :percent :etas", {
+			total: testData.length,
+		});
+
+		testData.forEach(async (data) => {
+			progressBar.tick();
+
 			// Set timestamp and price for test algorithm
 			localstorage.setItem("timestamp", data.price);
 			localstorage.setItem("price", data.price);
 
-			main();
+			await main();
 		});
 
 		// Results collection and Test Reporting
