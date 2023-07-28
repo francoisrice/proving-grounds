@@ -101,30 +101,26 @@ export const newSellInterrupt = async (algo: string): Promise<boolean> => {
 
 export const sendEntryInfoToDB = async (algo: string, entryPrice: number) => {
 	const timestamp = localstorage.getItem("timestamp");
-	writeFileSync(
-		`results/${algo}-entries.json`,
-		JSON.stringify({ timestamp, algo, entryPrice }),
-		{ flag: "a" }
+	var entries = JSON.parse(
+		readFileSync(`results/${algo}-entries.json`, "utf-8")
 	);
+	entries.push({ timestamp, algo, entryPrice });
+	writeFileSync(`results/${algo}-entries.json`, JSON.stringify(entries));
 	return { acknowledged: true };
 };
 
 export const sendExitInfoToDB = async (algo: string, exitPrice: number) => {
 	const timestamp = localstorage.getItem("timestamp");
-	writeFileSync(
-		`results/${algo}-exits.json`,
-		JSON.stringify({ timestamp, algo, exitPrice }),
-		{ flag: "a" }
-	);
+	var exits = JSON.parse(readFileSync(`results/${algo}-exits.json`, "utf-8"));
+	exits.push({ timestamp, algo, exitPrice });
+	writeFileSync(`results/${algo}-exits.json`, JSON.stringify(exits));
 	return { acknowledged: true };
 };
 
 export const sendTradeInfoToDB = async (algo: string, tradeInfo: TradeInfo) => {
-	const timestamp = localstorage.getItem("timestamp");
-	writeFileSync(
-		`results/${algo}-trades.json`,
-		JSON.stringify({ timestamp, tradeInfo }),
-		{ flag: "a" }
-	);
+	const tradesObj = readFileSync(`results/${algo}-trades.json`, "utf-8");
+	var trades: TradeInfo[] = JSON.parse(tradesObj);
+	trades.push(tradeInfo);
+	writeFileSync(`results/${algo}-trades.json`, JSON.stringify(trades));
 	return { acknowledged: true };
 };
