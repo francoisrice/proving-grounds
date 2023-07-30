@@ -6,7 +6,7 @@ import ProgressBar from "progress";
 import { LocalStorage } from "node-localstorage";
 // import { main } from "./test-algorithm/main";
 // import { main } from "./test-algorithm/bb-reversal-1min-main";
-import { main } from "./test-algorithm/inverted-bb-reversal-1min-main";
+import { main } from "./test-algorithm/bb-breakout-1min-main";
 // import { main } from "./test-algorithm/new-monthly-high-main";
 import { TradeInfo } from "./test-algorithm/types";
 // main should fetch price or candles from fetcher
@@ -185,7 +185,11 @@ const pullTestData = () => {
 		const testData = JSON.parse(
 			fs.readFileSync(
 				// "data/bear/1-min_data_2012-01-01_to_2021-03-31_timestamp_weighted_price.json",
-				"data/crab/1-min_data_2015-01-13_to_2015-10-26_timestamp_weighted_price.json",
+				// "data/bull/1-min_data_2012-01-01_to_2013-12-01_timestamp_weighted_price.json", // Bull #1
+				"data/bull/1-min_data_2020-03-18_to_2021-03-31_timestamp_weighted_price.json", // Bull #3
+				// "data/crab/1-min_data_2015-01-13_to_2015-10-26_timestamp_weighted_price.json", // Crab #1
+				// "data/crab/1-min_data_2018-06-25_to_2018-11-08_timestamp_weighted_price.json", // Crab #2
+				// "data/crab/1-min_data_2018-12-12_to_2019-03-31_timestamp_weighted_price.json", // Crab #3
 				"utf-8"
 			)
 		);

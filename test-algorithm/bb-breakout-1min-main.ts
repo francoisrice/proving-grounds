@@ -35,15 +35,15 @@ const isLiveTrading: boolean =
 */
 
 // const algo: string = process.env.ALGO || "bb-reversal-1min-btc-v0_1";
-const algo: string = process.env.ALGO || "inverted-bb-reversal-v0_1_1";
+const algo: string = process.env.ALGO || "bb-breakout-v0_1_6-bull3";
 // const algo: string = "bb-reversal-1min-v0_1_1";
 
 const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
-const profitTarget = null; // null; // 0.002;
+const profitTarget = 0.005; // null; // 0.002;
 // const stopLoss = 0.005; // Made redundant by trailingStop
 // const takeProfit = null; // Same as profitTarget
-const trailingStop = null; // 0.002; // null;
+const trailingStop = 0.003; // 0.002; // null;
 // const breakEven = null; // Move stop loss to entry price when price reaches this value - taken care of by trailingStop
 const timedExit = null; // 28800; // 8 hours by number of candles
 // No special filters for this algo
@@ -72,16 +72,16 @@ var lowerBand: number = 0;
 const isSellConditionMet = (
 	currentCandle: any,
 	previousCandle: any,
-	upperBand: any,
+	lowerBand: any,
 	entryPrice: string,
 	currentTime: Date,
 	entryTime: string
 ): boolean => {
 	// ******** DO NOT DELETE ********
-	if (currentCandle.close <= upperBand) {
+	if (currentCandle.close <= lowerBand) {
 		return true;
 	}
-	if (previousCandle.close <= upperBand) {
+	if (previousCandle.close <= lowerBand) {
 		return true;
 	}
 

@@ -4,9 +4,39 @@
 
 ## Bull:
 
+### 01/01/2012 - 12/01/2013:
+
+### 10/26/15 - 12/16/17:
+
+### 03/18/20 - 03/31/21: Bollinger Bands Reversal - 1min
+
+1. Buy at lower band, sell at upper band, no other settings [Processing...]
+2. Buy at lower band, sell at SMA
+3. Buy at lower band, 0.015 profit target, 0.005 trailingStop
+4. Buy at lower band, 0.005 profit target, 0.003 trailingStop
+5. Buy at lower band, 0.005 profit target, 0.002 trailingStop
+
+### 03/18/20 - 03/31/21: Bollinger Bands Breakout - 1min
+
+1. Buy at high band, sell at low band, no other settings [Processing...]
+2. Buy at high band, sell at SMA
+3. Buy at high band, profit target 0.005 [Processing...]
+4. Buy at high band, 0.002 trailingStop
+5. Buy at high band, 0.003 trailingStop
+6. Buy at high band, profit target 0.005, 0.003 trailingStop [Processing...]
+7. Tweak: previous candle high above band && current close above band, Buy, sell at low band
+
+### 03/18/20 - 03/31/21: Bollinger Bands Reversal - 30min
+
+### 03/18/20 - 03/31/21: Bollinger Bands Breakout - 4hr
+
+### 03/18/20 - 03/31/21: Turtle - 4hr
+
+### 03/18/20 - 03/31/21: Fibonacci Retracement - 15min
+
 ## Crab:
 
-### 01/12/15 - 10/26/15: Bollinger Bands - 1min
+### 01/12/15 - 10/26/15: Bollinger Bands Reversal - 1min
 
 1. Buy at lower band, sell at upper band, no other settings [$ -232]
 2. Buy at lower band, sell at SMA [$ -511]
@@ -31,6 +61,14 @@
 21. Lower band at 1.5 std devs (84% chance to increase), 0.005 profit target [$ 69] [!!!] [only 33 trades?]
 22. Lower band at 1.5 std devs (93% chance to increase), 0.005 profit target, trailing stop at 0.002 [$ -3935]
 23. Lower band at 1.0 std devs (84% chance to increase), 0.005 profit target, trailing stop at 0.002 [$ -6445]
-24. Buy at Upper band, Sell at Lower Band [$ 379] [!!!] [Inverted BB Reversal]
+24. Buy at Upper band, Sell at Lower Band [$ 379] [!!!] [BB Breakout]
 25. Buy at Upper band, Sell at Lower Band, 0.005 profit target
 26. Lower band at 2 std devs, 0.005 profit target
+
+### 06/25/18 - 11/08/18: Bollinger Bands Breakout - 1min
+
+1. Buy at high band, sell at low band, no other settings [$ 55] [!!!]
+
+### 12/12/18 - 03/31/21: Bollinger Bands Breakout - 1min
+
+1. Buy at high band, sell at low band, no other settings [$ 105] [!!!]

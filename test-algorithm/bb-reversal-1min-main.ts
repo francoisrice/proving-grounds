@@ -27,8 +27,13 @@ const isLiveTrading: boolean =
 * Adjust Candles for more macro, longer term trades
 */
 
+/* 
+Bull:
+1. Buy at lower band, sell at upper band, no other settings
+*/
+
 // const algo: string = process.env.ALGO || "bb-reversal-1min-btc-v0_1";
-const algo: string = process.env.ALGO || "bb-reversal-v0_1_24";
+const algo: string = process.env.ALGO || "bb-reversal-v0_1_1-bull3";
 // const algo: string = "bb-reversal-1min-v0_1_1";
 
 const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
