@@ -5,7 +5,8 @@ import ProgressBar from "progress";
 
 import { LocalStorage } from "node-localstorage";
 // import { main } from "./test-algorithm/main";
-import { main } from "./test-algorithm/bb-reversal-1min-main";
+// import { main } from "./test-algorithm/bb-reversal-1min-main";
+import { main } from "./test-algorithm/inverted-bb-reversal-1min-main";
 // import { main } from "./test-algorithm/new-monthly-high-main";
 import { TradeInfo } from "./test-algorithm/types";
 // main should fetch price or candles from fetcher
