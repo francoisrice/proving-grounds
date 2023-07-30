@@ -201,35 +201,85 @@ const pullTestData = () => {
 	}
 };
 
+const createTimeFrameCandles = (testData: any[], timeFrameString: string) => {
+	const timeFrameMapper: any = {
+		"1min": 1,
+		"5min": 5,
+		"15min": 15,
+		"30min": 30,
+		"1h": 60,
+		"4h": 240,
+		"1d": 1440,
+		"1w": 10080,
+		"1mon": 43800,
+	};
+
+	var newData: any[] = [];
+	var currentCandle: any = {
+		open: 0,
+		close: 0,
+		high: 0,
+		low: 0,
+	};
+
+	const minutesInTimeFrame: number = timeFrameMapper[timeFrameString];
+
+	testData.forEach((price: any, index: number) => {
+		if (index % minutesInTimeFrame === 0) {
+			currentCandle.open = price["Weighted_Price"];
+			currentCandle.low = price["Weighted_Price"];
+		}
+		currentCandle.high = Math.max(currentCandle.high, price["Weighted_Price"]);
+		currentCandle.low = Math.min(currentCandle.low, price["Weighted_Price"]);
+
+		if (index % minutesInTimeFrame === minutesInTimeFrame - 1) {
+			currentCandle.close = price["Weighted_Price"];
+			newData.push({ Timestamp: price["Timestamp"], candle: currentCandle });
+			currentCandle = {
+				open: 0,
+				close: 0,
+				high: 0,
+				low: 0,
+			};
+		}
+	});
+
+	return newData;
+};
+
 // TODO: Modify test algorithm main to pull candles/price from fetcher
 if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 	const candleNumberString = process.env.CANDLE_NUMBER;
 	if (candleNumberString === undefined) {
 		throw new Error("CANDLE_NUMBER not set in Environment Variables");
 	}
+	const timeFrameString = process.env.TIMEFRAME;
+	if (timeFrameString === undefined) {
+		throw new Error("TIMEFRAME not set in Environment Variables");
+	}
+
 	const candleNum = parseInt(candleNumberString);
 
 	(async () => {
 		const testData: any[] = pullTestData();
 
+		const processedData = createTimeFrameCandles(testData, timeFrameString);
+
 		var progressBar = new ProgressBar("[:bar] :percent :etas", {
-			total: testData.length - candleNum,
+			total: processedData.length - candleNum,
 		});
 
-		for (let i = 0; i < testData.length - candleNum; i++) {
+		for (let i = 0; i < processedData.length - candleNum; i++) {
 			progressBar.tick();
 
 			// Set timestamp and candles for test algorithm
-			localstorage.setItem("timestamp", testData[i]["Timestamp"]);
+			localstorage.setItem("timestamp", processedData[i]["Timestamp"]);
 			localstorage.setItem(
 				"candles",
 				JSON.stringify(
-					testData.slice(i, i + candleNum).map((candle) => {
+					processedData.slice(i, i + candleNum).map((candle) => {
 						return {
-							close: candle["Weighted_Price"],
-							high: candle["Weighted_Price"],
-							low: candle["Weighted_Price"],
-							open: candle["Weighted_Price"],
+							...candle.candle,
 						};
 					})
 				)
@@ -238,37 +288,40 @@ if (process.env.PRICE_FETCH?.toUpperCase().includes("CANDLE")) {
 			await main();
 		}
 
-		// Results collection and Test Reporting
-		// 		Where to store buys, sells, and tradeInfo?
-		// 		localstorage("entry")
-		// 		localstorage("exit")
-		// 		After storing in localstorage(exit), tally exit/entry gain/loss and write to file/memory
-
 		// Create results JSON
 		createFinalResultsFile(
-			testData[0]["Timestamp"],
-			testData[testData.length - 1]["Timestamp"]
+			processedData[0]["Timestamp"],
+			processedData[processedData.length - 1]["Timestamp"]
 		);
 	})();
 } else {
 	(async () => {
+		const timeFrameString = process.env.TIMEFRAME;
+		if (timeFrameString === undefined) {
+			throw new Error("TIMEFRAME not set in Environment Variables");
+		}
 		const testData: any[] = pullTestData();
 
+		const processedData = createTimeFrameCandles(testData, timeFrameString);
+
 		var progressBar = new ProgressBar("[:bar] :percent :etas", {
-			total: testData.length,
+			total: processedData.length,
 		});
 
-		testData.forEach(async (data) => {
+		processedData.forEach(async (data) => {
 			progressBar.tick();
 
 			// Set timestamp and price for test algorithm
-			localstorage.setItem("timestamp", data.price);
-			localstorage.setItem("price", data.price);
+			localstorage.setItem("timestamp", data["Timestamp"]);
+			localstorage.setItem("price", data.candle.close);
 
 			await main();
 		});
 
-		// Results collection and Test Reporting
-		// Test cleanup
+		// Create results JSON
+		createFinalResultsFile(
+			processedData[0]["Timestamp"],
+			processedData[processedData.length - 1]["Timestamp"]
+		);
 	})();
 }
