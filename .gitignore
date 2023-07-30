@@ -130,6 +130,8 @@ dist
 .pnp.*
 
 # Project specific
+archive
 data
 env
 results
+test-algorithm/*-localstorage

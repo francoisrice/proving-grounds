@@ -27,33 +27,16 @@ const isLiveTrading: boolean =
 * Adjust Candles for more macro, longer term trades
 */
 
-/*
-Crab:
-1. - Buy at lower band, sell at upper band, no other settings
-2. - Buy at lower band, sell at SMA
-3. - Buy at lower band, sell at SMA, 0.002 trailing stop
-4. - Buy at lower band, sell at SMA, 0.001 trailing stop
-5. - Buy at lower band, sell at upper band, 0.002 trailing stop
-6. - Buy at lower band, sell at upper band, 0.001 trailing stop
-7. - Buy at lower band, sell at upper band, 0.001 trailing stop, 28800 candle timed exit
-8. - Lower band at 1.5 std devs (93% chance to increase), trailing stop at 0.001 
-9. - Lower band at 1.5 std devs (93% chance to increase), trailing stop at 0.002 
-10. - Lower band at 1.5 std devs (93% chance to increase), trailing stop at 0.005 
-11. - Lower band at 1.0 std devs (84% chance to increase), trailing stop at 0.001 
-12. - Lower band at 1.0 std devs (84% chance to increase), trailing stop at 0.002 
-13. - Lower band at 1.0 std devs (84% chance to increase), trailing stop at 0.005 
-*/
-
 // const algo: string = process.env.ALGO || "bb-reversal-1min-btc-v0_1";
-const algo: string = process.env.ALGO || "bb-reversal-v0_1_1a";
+const algo: string = process.env.ALGO || "bb-reversal-v0_1_24";
 // const algo: string = "bb-reversal-1min-v0_1_1";
 
 const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
-const profitTarget = null; // 0.002;
+const profitTarget = null; // null; // 0.002;
 // const stopLoss = 0.005; // Made redundant by trailingStop
 // const takeProfit = null; // Same as profitTarget
-const trailingStop = null; // 0.001;
+const trailingStop = null; // 0.002; // null;
 // const breakEven = null; // Move stop loss to entry price when price reaches this value - taken care of by trailingStop
 const timedExit = null; // 28800; // 8 hours by number of candles
 // No special filters for this algo
@@ -81,17 +64,26 @@ var lowerBand: number = 0;
 
 const isSellConditionMet = (
 	currentCandle: any,
-	// previousCandle: any,
-	// upperBand: any,
+	previousCandle: any,
+	upperBand: any,
 	entryPrice: string,
-	currentTime: any,
+	currentTime: Date,
 	entryTime: string
 ): boolean => {
 	// ******** DO NOT DELETE ********
-	// if (currentCandle.close >= upperBand) {
+	if (currentCandle.close >= upperBand) {
+		return true;
+	}
+	if (previousCandle.close >= upperBand) {
+		return true;
+	}
+
+	// ******** DO NOT DELETE ********
+	// Inverted
+	// if (currentCandle.close <= upperBand) {
 	// 	return true;
 	// }
-	// if (previousCandle.close >= upperBand) {
+	// if (previousCandle.close <= upperBand) {
 	// 	return true;
 	// }
 
@@ -147,7 +139,7 @@ const createTrade = (currentTime: Date, exitPrice: number): TradeInfo => {
 	} else {
 		entryPrice = returnedEntryPrice;
 		profitAbsolute = exitPrice - entryPrice;
-		profitPercent = exitPrice - entryPrice / entryPrice;
+		profitPercent = (exitPrice - entryPrice) / entryPrice;
 
 		const returnedAssetAmount = parseInt(
 			localstorage.getItem("assetAmount-BTC") || "0"
@@ -235,6 +227,10 @@ export const main = async () => {
 			!isPositionOpen &&
 			previousCandle.low < lowerBand &&
 			currentCandle.close > previousCandle.high
+
+			// Inverted
+			// previousCandle.high > upperBand &&
+			// currentCandle.close < previousCandle.low
 		) {
 			// Open a position
 			console.log(
@@ -300,7 +296,14 @@ export const main = async () => {
 			}
 
 			if (
-				isSellConditionMet(currentCandle, entryPrice, currentTime, entryTime)
+				isSellConditionMet(
+					(currentCandle = currentCandle),
+					(previousCandle = previousCandle),
+					upperBand,
+					entryPrice,
+					(currentTime = currentTime),
+					entryTime
+				)
 			) {
 				// Close a position
 				console.log(
