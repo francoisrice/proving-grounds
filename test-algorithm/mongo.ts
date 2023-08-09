@@ -1,8 +1,13 @@
 require("dotenv").config();
 import { readFileSync, writeFileSync } from "fs";
 import { LocalStorage } from "node-localstorage";
+import { MongoClient } from "mongodb";
 
 import { TradeInfo } from "./types";
+
+const uri = process.env.MONGO_URI || "";
+// console.log(uri);
+const client = new MongoClient(uri);
 
 const algo = process.env.ALGO;
 
@@ -100,27 +105,70 @@ export const newSellInterrupt = async (algo: string): Promise<boolean> => {
 };
 
 export const sendEntryInfoToDB = async (algo: string, entryPrice: number) => {
-	const timestamp = localstorage.getItem("timestamp");
-	var entries = JSON.parse(
-		readFileSync(`results/${algo}-entries.json`, "utf-8")
-	);
-	entries.push({ timestamp, algo, entryPrice });
-	writeFileSync(`results/${algo}-entries.json`, JSON.stringify(entries));
-	return { acknowledged: true };
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		const timestamp = localstorage.getItem("timestamp");
+		var entries = JSON.parse(
+			readFileSync(`results/${algo}-entries.json`, "utf-8")
+		);
+		entries.push({ timestamp, algo, entryPrice });
+		writeFileSync(`results/${algo}-entries.json`, JSON.stringify(entries));
+		return { acknowledged: true };
+	} else {
+		const datetime = new Date();
+
+		await client.connect();
+
+		const entry = await client
+			.db("dev")
+			.collection("entries")
+			.insertOne({ datetime, algo, entryPrice });
+
+		await client.close();
+
+		return entry;
+	}
 };
 
 export const sendExitInfoToDB = async (algo: string, exitPrice: number) => {
-	const timestamp = localstorage.getItem("timestamp");
-	var exits = JSON.parse(readFileSync(`results/${algo}-exits.json`, "utf-8"));
-	exits.push({ timestamp, algo, exitPrice });
-	writeFileSync(`results/${algo}-exits.json`, JSON.stringify(exits));
-	return { acknowledged: true };
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		const timestamp = localstorage.getItem("timestamp");
+		var exits = JSON.parse(readFileSync(`results/${algo}-exits.json`, "utf-8"));
+		exits.push({ timestamp, algo, exitPrice });
+		writeFileSync(`results/${algo}-exits.json`, JSON.stringify(exits));
+		return { acknowledged: true };
+	} else {
+		const datetime = new Date();
+
+		await client.connect();
+
+		const exit = await client
+			.db("dev")
+			.collection("exits")
+			.insertOne({ datetime, algo, exitPrice });
+
+		await client.close();
+
+		return exit;
+	}
 };
 
 export const sendTradeInfoToDB = async (algo: string, tradeInfo: TradeInfo) => {
-	const tradesObj = readFileSync(`results/${algo}-trades.json`, "utf-8");
-	var trades: TradeInfo[] = JSON.parse(tradesObj);
-	trades.push(tradeInfo);
-	writeFileSync(`results/${algo}-trades.json`, JSON.stringify(trades));
-	return { acknowledged: true };
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		const tradesObj = readFileSync(`results/${algo}-trades.json`, "utf-8");
+		var trades: TradeInfo[] = JSON.parse(tradesObj);
+		trades.push(tradeInfo);
+		writeFileSync(`results/${algo}-trades.json`, JSON.stringify(trades));
+		return { acknowledged: true };
+	} else {
+		await client.connect();
+
+		const trade = await client
+			.db("dev")
+			.collection("trades")
+			.insertOne({ ...tradeInfo });
+
+		await client.close();
+
+		return trade;
+	}
 };

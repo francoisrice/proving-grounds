@@ -21,6 +21,7 @@
     "dotenv": "^16.3.1",
     "fs": "^0.0.1-security",
     "mathjs": "^11.9.0",
+    "mongodb": "^5.7.0",
     "node-localstorage": "^2.2.1",
     "progress": "^2.0.3",
     "typescript": "^5.1.3"
