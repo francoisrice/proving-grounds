@@ -46,6 +46,14 @@ export const fetchCandles = async (candleNum: number): Promise<any> => {
 			candleNum
 		);
 		return Promise.resolve(candles);
+	} else {
+		const response = await fetch(
+			`https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=60&limit=${candleNum}`,
+			{ method: "GET" }
+		);
+		const responseData = await response.json();
+
+		return responseData.data.ohlc;
 	}
 };
 
