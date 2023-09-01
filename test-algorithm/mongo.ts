@@ -5,88 +5,197 @@ import { MongoClient } from "mongodb";
 
 import { TradeInfo } from "./types";
 
-const uri = process.env.MONGO_URI || "";
-// console.log(uri);
-const client = new MongoClient(uri);
+if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+	//
+} else {
+	var uri = process.env.MONGO_URI || "";
+	// console.log(uri);
+	var client = new MongoClient(uri);
+}
 
 const algo = process.env.ALGO;
 
 const localstorage = new LocalStorage(`./test-algorithm/${algo}-localstorage`);
 
-const getDatetime3daysAgo = (date: Date) => {
+export const getDatetime3daysAgo = (date: Date) => {
 	date.setDate(date.getDate() - 3);
 	return date;
 };
 
 export const aggregateTrades = async (algo: string) => {
-	var timestamp: any = null;
-	var count: number = 0;
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		var timestamp: any = null;
+		var count: number = 0;
 
-	while (!timestamp) {
-		timestamp = localstorage.getItem("timestamp");
-		count++;
-		if (count > 5) {
-			console.log(
-				"Stuck fetching current Timestamp in aggregateTrades() - mongo.ts"
-			);
+		while (!timestamp) {
+			timestamp = localstorage.getItem("timestamp");
+			count++;
+			if (count > 5) {
+				console.log(
+					"Stuck fetching current Timestamp in aggregateTrades() - mongo.ts"
+				);
+			}
 		}
+
+		const threeDaysAgo = parseInt(timestamp) - 72 * 60 * 60;
+		const currentDate = parseInt(timestamp);
+
+		const trades: TradeInfo[] = JSON.parse(
+			readFileSync(`../results/${algo}-trades.json`, "utf-8")
+		);
+
+		var subTrades: TradeInfo[] = [];
+
+		trades.forEach((trade) => {
+			if (
+				trade.entryDatetime.getTime() / 1000 > threeDaysAgo &&
+				trade.exitDatetime.getTime() / 1000 < currentDate
+			) {
+				subTrades.push(trade);
+			}
+		});
+
+		// Get trades from the last 3 days
+		// 	Must store trades ... in a time-series list ...
+		// 		where I can easily get a subset by date
+
+		// List of objects; timestamp field; all values more than X
+		// 		and less than Y go into the subset; no-dedup required
+
+		return subTrades;
+	} else {
+		const currentDate = new Date();
+
+		const trades = await client
+			// .db("trades")
+			// .collection(algo)
+			.db("dev")
+			.collection("trades")
+			.aggregate([
+				{
+					$match: {
+						algo: algo,
+						exitDatetime: { $gt: getDatetime3daysAgo(currentDate) },
+					},
+				},
+				{
+					$group: {
+						_id: "$algo",
+						grossProfitPercent: { $sum: "$profitPercent" },
+					},
+				},
+			])
+			.toArray();
+
+		return trades;
 	}
-
-	const threeDaysAgo = parseInt(timestamp) - 72 * 60 * 60;
-	const currentDate = parseInt(timestamp);
-
-	const trades: TradeInfo[] = JSON.parse(
-		readFileSync(`../results/${algo}-trades.json`, "utf-8")
-	);
-
-	var subTrades: TradeInfo[] = [];
-
-	trades.forEach((trade) => {
-		if (
-			trade.entryDatetime.getTime() / 1000 > threeDaysAgo &&
-			trade.exitDatetime.getTime() / 1000 < currentDate
-		) {
-			subTrades.push(trade);
-		}
-	});
-
-	// Get trades from the last 3 days
-	// 	Must store trades ... in a time-series list ...
-	// 		where I can easily get a subset by date
-
-	// List of objects; timestamp field; all values more than X
-	// 		and less than Y go into the subset; no-dedup required
-
-	return subTrades;
 };
 
 export const fetchCurrentAlgo = async () => {
-	var currentAlgo = null;
-	while (!currentAlgo) {
-		currentAlgo = localstorage.getItem("chimera-currentAlgo");
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		var currentAlgo = null;
+		while (!currentAlgo) {
+			currentAlgo = localstorage.getItem("chimera-currentAlgo");
+		}
+		return currentAlgo;
+	} else {
+		let chimera: string = "bitcoin-chimera";
+
+		const algo = await client
+			.db("dev")
+			.collection("chimera")
+			.findOne({ chimera });
+
+		// console.log(algo);
+		return algo?.currentAlgo;
 	}
-	return currentAlgo;
 };
 
 export const updateAlgoSettingsACID = async (
 	previousAlgo: string,
 	newAlgo: string
 ) => {
-	localstorage.setItem(`${previousAlgo}-buy`, "100");
-	localstorage.setItem(`${previousAlgo}-sell`, "100");
-	localstorage.setItem(`${newAlgo}-buy`, "10000");
-	localstorage.setItem(`${newAlgo}-sell`, "10000");
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		localstorage.setItem(`${previousAlgo}-buy`, "100");
+		localstorage.setItem(`${previousAlgo}-sell`, "100");
+		localstorage.setItem(`${newAlgo}-buy`, "10000");
+		localstorage.setItem(`${newAlgo}-sell`, "10000");
+	} else {
+		const session = client.startSession();
+
+		const transactionResults = await session.withTransaction(
+			async () => {
+				const previousAlgoUpdateResponse = await client
+					.db("dev")
+					.collection("params")
+					.updateOne(
+						{ algo: previousAlgo },
+						{ $set: { buySize: 10, sellSize: 10 } },
+						{ session }
+					);
+				const newAlgoUpdateResponse = await client
+					.db("dev")
+					.collection("params")
+					.updateOne(
+						{ algo: newAlgo },
+						{ $set: { buySize: "MAX", sellSize: "MAX" } },
+						{ session }
+					);
+				// TODO: ROllback logic
+				// TODO: Retry logic
+			},
+			{
+				readPreference: "primary",
+				readConcern: { level: "local" },
+				writeConcern: { w: "majority" },
+			}
+		);
+
+		return transactionResults;
+	}
 };
 
 export const updateCurrentAlgo = async (newAlgo: string) => {
-	localstorage.setItem("chimera-currentAlgo", `${newAlgo}`);
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		localstorage.setItem("chimera-currentAlgo", `${newAlgo}`);
+		return { acknowledged: true };
+	} else {
+		const updateResponse = await client
+			.db("dev")
+			.collection("chimera")
+			.updateOne(
+				{ chimera: "bitcoin-chimera" },
+				{ $set: { currentAlgo: newAlgo } }
+			);
+
+		return updateResponse;
+	}
 };
 
-export const sendSellInterrupt = async (algo: string) => {
-	localstorage.setItem(
-		"sellInterrupt-algo",
-		`'{"sellInterrupt": true, "algo": "${algo}"}'`
-	);
+export const sendSellInterrupt = async (
+	previousAlgo: string,
+	newAlgo: string
+) => {
+	if (process.env.ENV?.toUpperCase().includes("BACKTEST")) {
+		localstorage.setItem(
+			"sellInterrupt-algo",
+			`'{"sellInterrupt": true, "algo": "${algo}"}'`
+		);
+
+		localstorage.setItem("chimera-currentAlgo", `${newAlgo}`);
+
+		return true;
+	} else {
+		const updateResponse = await client
+			.db("dev")
+			.collection("chimera")
+			.updateOne(
+				{ chimera: "bitcoin-chimera" },
+				{ $set: { sellInterrupt: true, previousAlgo, currentAlgo: newAlgo } }
+			);
+
+		return updateResponse.acknowledged;
+	}
 };
 
 export const fetchAlgoParams = async (algo: string) => {
